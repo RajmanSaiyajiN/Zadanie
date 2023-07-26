@@ -2,7 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
-#include "Map.h"
+#include "MediatorMap.h"
 	//function that opens map file and gets data
 	void Map::loadFromFile(const std::string& filename) {
 		std::ifstream file(filename);
@@ -18,9 +18,9 @@
 			sizeY = lines.size();    //y size from amount of lines
 			sizeX = lines[0].size(); //x size from 1st(0) line length as all lines should be the same size
 			board = new int* [sizeY];
-			for (int i = 0; i < sizeY; ++i) {
+			for (int i = 0; i < sizeY; i++) {
 				board[i] = new int[sizeX];
-				for (int j = 0; j < sizeX; ++j) {
+				for (int j = 0; j < sizeX; j++) {
 					board[i][j] = lines[i][j] - '0'; //board is int type, and data from file are string type, as they are supposed to be numbers only - '0' converts them to integers of same value as string numbers represent
 				}
 			}
@@ -49,12 +49,12 @@
 	}
 	//function to display map for testing
 	void Map::displayMap() const {
-		std::cout << "Mapa:" << std::endl;
+		//std::cout << "Mapa:" << std::endl;
 		for (int i = 0; i < sizeY; ++i) {
 			for (int j = 0; j < sizeX; ++j) {
-				std::cout << board[i][j];
+				//std::cout << board[i][j];
 			}
-			std::cout << std::endl;
+			//std::cout << std::endl;
 		}
 	}
 	//function that returns x size of board

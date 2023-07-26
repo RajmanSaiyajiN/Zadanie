@@ -1,10 +1,15 @@
 #pragma once
 #include "MediatorStatus.h"
 #include "MediatorMap.h"
+#include "ProductionControl.h"
+
+int getMovement(char unitType);
 
 int getDamage(char attacker, char defender);
 
 int getDamageById(int attacker, int defender, Status& status);
+
+int getProductionTime(char type);
 
 class Orders {
 private:
@@ -41,7 +46,7 @@ public:
 
 	void saveToFile(const std::string& filename);
 
-	void checkOrders(Status& status, Map& map);
+	void checkOrders(Status& status, Map& map,ProductionControl& controller);
 
 	
 };

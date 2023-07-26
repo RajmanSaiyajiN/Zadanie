@@ -1,5 +1,6 @@
 #pragma once
 #include "Unit.h"
+#include "MediatorMap.h"
 //class that gets data from status file
 class Status {
 private:
@@ -33,11 +34,20 @@ public:
 	//get parameter, mainly price
 	int getUnitParameterValue(const char type, int parameter);
 	//function to set production
+	void setProduction(char type);
+	//function to set production
 	void setProduction(int id, char type);
 	//function that reduces movement points
 	void reduceMovementPoints(int unit_id, int amount);
 	//function to change teams inside Status in order to pass file to another player
 	void mirrorStatus(int gold);
+	//function to add new Unit
+	void addUnit(char type);
+	//function to generate new id
+	int generateId();
+	bool isBaseAlive();
+	//function to get gold from workers
+	void collectGold(const Map& map);
 	//function to get amount of gold
 	int getGold();
 	void setGold(int newGold);

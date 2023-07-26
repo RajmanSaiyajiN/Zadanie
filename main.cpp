@@ -17,6 +17,7 @@
 void timeMeasurementThread(std::chrono::seconds duration, Orders& orders,std::string filename) {
 	std::this_thread::sleep_for(duration);
 	orders.saveToFile(filename);
+	//orders.saveToFile("rozkazytestowe");
 	exit(0);
 }
 
@@ -31,7 +32,9 @@ int main(int argc, char* argv[]) {
 	std::string ordersFileName = argv[3];
 
 	//save time limit as float
-	int limitCzasowy = std::stoi(argv[4]);
+	char* end; //
+
+        int limitCzasowy = std::strtol(argv[4], &end, 10);
 	if (limitCzasowy > 1) {
 		limitCzasowy -= 1;  //give time to save orders and exit
 	}
@@ -52,7 +55,8 @@ int main(int argc, char* argv[]) {
 	findBestMoves(*mapa, *mou, *status, *orders);
 	findBestAttacks(*mapa, *mou, *status, *orders);
 	findBestPurchase(*mapa, *mou, *status, *orders);
-	//orders->saveToFile(rozkazyFileName);
+	//std::cout<<"Ruchy wykonane"<< std::endl;
+	//orders->saveToFile(ordersFileName);
 	delete mapa;
 	delete status;
 	delete mou;

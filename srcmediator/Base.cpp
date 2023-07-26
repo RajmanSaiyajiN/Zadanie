@@ -62,9 +62,7 @@ void Base::reduceMovementPoints(int movementCost) {
 }
 
 void Base::setProduction(char newProduction) {
-	if (this->production != '0') {
 		this->production = newProduction;
-	}
 }
 
 bool Base::checkProduction() {

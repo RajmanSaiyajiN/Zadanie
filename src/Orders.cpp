@@ -53,13 +53,14 @@
 
 		if (file.is_open()) {
 			for (const std::string& order : orders) {
+				//std::cout<<order<<std::endl;
 				file << order << std::endl;
 			}
 
-			file.close();
 			//std::cout << "Orders saved to file: " << filename << std::endl;
 		}
 		else {
 			//std::cout << "Unable to open file: " << filename << std::endl;
 		}
+		file.close();
 	}

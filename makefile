@@ -17,8 +17,8 @@ MEDIATOR_HEADERS = $(wildcard $(MEDIATOR_INC_DIR)/*.h)
 
 #Compilation options
 CC = g++
-CFLAGS = -Wall -I$(MAIN_INC_DIR) -I$(MEDIATOR_INC_DIR)
-LDFLAGS = -pthread
+CFLAGS = -Wall -I$(MAIN_INC_DIR) -I$(MEDIATOR_INC_DIR) -g
+LDFLAGS = -pthread 
 
 main: $(MAIN_OBJS) $(MAIN_OBJ_DIR)/main.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^

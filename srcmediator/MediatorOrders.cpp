@@ -6,6 +6,27 @@
 #include "MediatorOrders.h"
 #include "MediatorMap.h"
 #include "Base.h"
+#include "ProductionControl.h"
+
+	int getMovement(char unitType){
+		std::string movementValues[2][7] = { //tab containing unit types and its movement points
+			{"K","S","A","P","C","R","W"},
+			{"5", "2", "2", "2", "2", "2", "2"},
+		};
+		
+		int i=0, x=0;
+		while (i < 7 && x == 0) {
+			if (unitType == movementValues[0][i][0]) {
+				x = i;
+				break;
+			}
+			else {
+				i++;
+			}
+		}
+		return std::stoi(movementValues[1][x]);
+		
+	}
 
 	int getDamage(char attacker, char defender) {
 		std::string damageValues[8][9] = { //tab containing unit types and damage
@@ -61,6 +82,25 @@
 		}
 		return getDamage(attackerType, defenderType);
 	}
+	
+	int getProductionTime(char type){
+		std::string productionTime[2][7] = { //tab containing unit types and damage
+			{"K","S","A","P","C","R","W"},
+			{"5", "3", "3", "3", "6", "4", "2"}
+		};
+		
+		int i=0, x=0;
+		while (i < 7 && x == 0) {
+			if (type == productionTime[0][i][0]) {
+				x = i;
+				break;
+			}
+			else {
+				i++;
+			}
+		}
+		return std::stoi(productionTime[1][x]);
+	}
 
 	bool Orders::checkID(int id, Status& status) {
 		std::vector<Unit*> allUnits = status.getUnits();
@@ -89,6 +129,8 @@
 		std::vector<Unit*> allUnits = status.getUnits();
 		for (const auto& someUnit : allUnits) {
 			if (someUnit->id == id) {
+				someUnit->movementRange=getMovement(someUnit->type);
+				//std::cout<<"MV check: " << someUnit->id<< " "<< someUnit->type<< " "<<someUnit->x<<" "<<someUnit->y<<"xy "<< x<< " " << y<<" "<<someUnit->movementRange<<std::endl;
 				if ((std::abs(x - someUnit->x) + std::abs(y - someUnit->y))<someUnit->movementRange) {
 					return true;
 				}
@@ -111,7 +153,7 @@
 			}
 		}
 		if(mapX>x && mapY>y && x >=0 && y >=0){
-				if (map.getTile(y, x) == 6 || map.getTile(x, y)==0) {
+				if (map.getTile(y, x) == 6 || map.getTile(y, x)==0) {
 					return true;
 				}
 			}
@@ -140,7 +182,6 @@
 
 	bool Orders::checkBaseProduction(int id, Status& status) {
 		std::vector<Unit*> allUnits = status.getUnits();
-		Base* myBase;
 		for (const auto& friendlyUnit : allUnits) {
 			//find base
 			if (friendlyUnit->team == 'P' && friendlyUnit->type == 'B') {
@@ -184,6 +225,7 @@
 	}
 
 	Orders::Orders(std::string filename) {
+		loadFromFile(filename);
 
 	}
 
@@ -194,6 +236,7 @@
 			std::string line;
 			while (std::getline(file, line)) {//read all lines 
 				if (!line.empty()) {
+					//std::cout<<line<<std::endl;
 					orders.push_back(line);  //add line to vector if it contains some data
 				}
 			}
@@ -201,6 +244,7 @@
 		else {
 			//std::cerr << "Błąd otwarcia pliku: " << filename << std::endl;
 		}
+		file.close();
 	}
 
 	bool Orders::checkConditions() {
@@ -247,8 +291,9 @@
 		}
 	}
 
-	void Orders::checkOrders(Status& status, Map& map) {
-		for (int i = 0; i < orders.size(); i++) {
+	void Orders::checkOrders(Status& status, Map& map,ProductionControl& controller) {
+		for (int i = 0; i < (orders.size()); i++) {
+			//std::cout<<"Enter order: "<<orders[i]<<std::endl;
 			std::istringstream iss(orders[i]);  //helps load data divided by space directly to variable type
 			int id;
 			char orderType;
@@ -256,36 +301,53 @@
 			char production;
 			int enemyID;
 
-	
+		
 			if (iss >> id >> orderType >> x >> y) {
+				//std::cout<<"Move passed"<<std::endl;
 				if (orderType == 'M') {
+					//std::cout<<"Move is move: "<< checkID(id, status)<<" "<< canMove(id, status)<<" "<< hasMovementPoints(id, status, y, x)<<" " << checkDestinationPoint(id, status, map, y, x)<<std::endl;
 					if (checkID(id, status) == true && canMove(id, status) == true && hasMovementPoints(id, status, y, x) == true && checkDestinationPoint(id, status, map, y, x) == true) {
 						status.changeLocation(id, x, y);
+						//std::cout<<"Move doneyooooo"<<id<<" "<< x << " " << y << std::endl;
+						continue;
 					}
 
 				}
 			}
 			else {
+				//std::cout<<"Move not doneyooooo"<<id<<" "<< x << " " << y << std::endl;
 				iss.clear();        //clear stream
 				iss.seekg(0);       //set reading pointer to 0 - reset it
 
 			}
+			//attack order
 			if (iss >> id >> orderType >> enemyID) {
+				//std::cout<<"attack passed"<<std::endl;
 				if (orderType == 'A') {
-					if (checkID(id, status) == true && checkID(enemyID, status) == true && canMove(id, status) && hasMovementPoints(id, status, y, x) == true && checkTeam(id, enemyID, status) == true && canAttack(id, enemyID, status) == true) {
+					//std::cout<<"attack is attack: "<< checkID(id, status) <<" " << checkID(enemyID, status)<<" "<< canMove(id, status) << " "<< canAttack(id, enemyID, status)<<std::endl;
+					if (checkID(id, status) == true && checkID(enemyID, status) == true && canMove(id, status) && checkTeam(id, enemyID, status) == true && canAttack(id, enemyID, status) == true) {
 						status.getDamage(enemyID, getDamageById(id, enemyID, status));
+						//std::cout<<"attack made: "<<id<<" "<< enemyID << std::endl;
+						continue;
 					}
 				}
 			}
 			else {
+				//std::cout <<"Bladyataku"<< orders[i] << std::endl;
 				iss.clear();        //clear stream
 				iss.seekg(0);       //set reading pointer to 0 - reset it
 
 			}
+			//production order
 			if (iss >> id >> orderType >> production) {
 				if (orderType == 'B') {
+					//std::cout<<"found buy order"<<std::endl;
 					if (checkID(id, status) == true && checkBaseProduction(id, status) == true) {
 						status.setProduction(id, production);
+						controller.type = production;
+						controller.remainingTime=getProductionTime(production);
+						//std::cout<<"Production added"<<id<<" "<< orderType << std::endl;
+						continue;
 					}
 				}
 			}

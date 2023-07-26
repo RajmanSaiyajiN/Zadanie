@@ -122,10 +122,11 @@
 	//function to change location of units
 	void Status::changeLocation(int unit_id, int newX, int newY) {
 		int i = 0;
-		while (unit_id != units[i]->id && i >= units.size()) { //find unit by its id
+		while (i<units.size() && unit_id != units[i]->id) { //find unit by its id
 			i++;
 		}
 		if (i < units.size()) { //replace old location with new one
+			units[i]->movementRange -= (std::abs(units[i]->x - newX) + std::abs(units[i]->y - newY));
 			units[i]->x = newX;
 			units[i]->y = newY;
 		}

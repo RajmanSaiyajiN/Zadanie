@@ -4,6 +4,7 @@
 #include <sstream>
 #include "MediatorStatus.h"
 #include "Units.h"
+#include "MediatorMap.h"
 
 	//function that creates new unit other than base
 	Unit* Status::createUnit(char team, char type, int id, int x, int y, int health) {
@@ -122,7 +123,7 @@
 	//function to change location of units
 	void Status::changeLocation(int unit_id, int newX, int newY) {
 		int i = 0;
-		while (unit_id != units[i]->id && i >= units.size()) { //find unit by its id
+		while (i<units.size() && unit_id != units[i]->id ) { //find unit by its id
 			i++;
 		}
 		int  distance;
@@ -136,12 +137,12 @@
 
 	void Status::getDamage(int unit_id, int damage) {
 		int i = 0;
-		while (unit_id != units[i]->id && i >= units.size()) { //find unit by its id
+		while (i<units.size() && unit_id != units[i]->id ) { //find unit by its id
 			i++;
 		}
 		if (i < units.size()) { 
 			units[i]->takeDamage(damage);  //call units function
-			if (units[i]->health <= 0) {
+			if (units[i]->health <= 0 && units[i]->type!='B') {
 				delete units[i];
 				units.erase(units.begin() + i);
 			}
@@ -178,19 +179,53 @@
 
 
 	}
+	
+	void Status::setProduction(char type) {
+		for(int i=0;i<units.size();i++){
+			if(units[i]->team == 'P' && units[i]->type == 'B'){
+				//std::cout<<"production setting: ";
+				if (Base* baseUnit = dynamic_cast<Base*>(units[i])) {
+					baseUnit->setProduction(type);
+					//std::cout<<"Production set: "<<type<< " "<< units[i]->id<<std::endl;
+					if(type!='0'){
+						int cost = getUnitParameterValue(type, 3);
+						//std::cout<<"B, P, A "<<gold<< " "<<cost;
+						gold -= cost;
+						//std::cout<<" "<<gold<<std::endl;
+					}
+				}
+			}
+		}
+	
+			
 
-	void Status::setProduction(int id, char type) {
+		}
+
+	void Status::setProduction(int id,char type) {
 		int i = 0;
-		while (units[i]->id != id) {
+		while ( units.size()>i && units[i]->id != id) {
 			i++;
 		}
+		//std::cout<<"production setting: "<< id ;
 		if (i < units.size()) {
 			//find base
+			//std::cout<<"Found id: "<<units[i]->id<<" ";
 			if (units[i]->team == 'P' && units[i]->type == 'B') {
 				if (Base* baseUnit = dynamic_cast<Base*>(units[i])) {
 					baseUnit->setProduction(type);
-					int cost = getUnitParameterValue(type, 3);
-					gold -= cost;
+					//std::cout<<"Production set: "<<type<< " ";
+					if(type!='0'){
+						int cost = getUnitParameterValue(type, 3);
+						//std::cout<<"B, P, A "<<gold<< " "<<cost;
+						gold -= cost;
+						//std::cout<<" "<<gold<<std::endl;
+					}
+				}
+			}
+			else if(units[i]->type == 'B'&& type =='0'){
+				if (Base* baseUnit = dynamic_cast<Base*>(units[i])) {
+					baseUnit->setProduction(type);
+					//std::cout<<"Production2 set: "<<type<< " ";
 				}
 			}
 		}
@@ -200,7 +235,7 @@
 
 	void Status::reduceMovementPoints(int unit_id, int amount) {
 		int i = 0;
-		while (unit_id != units[i]->id && i >= units.size()) { //find unit by its id
+		while (i<units.size() && unit_id != units[i]->id ) { //find unit by its id
 			i++;
 		}
 		if (i < units.size()) {
@@ -214,15 +249,75 @@
 			if (units[i]->team == 'E') {
 				units[i]->team = 'P';
 			}
-			else {
+			else if (units[i]->team == 'P'){
 				units[i]->team = 'E';
 			}
 
 		}
 	}
-
+	void Status::addUnit(char type){
+		int x=0,y=0;
+		int health=0;
+		for(const Unit* unit : units){
+			if(unit->type == 'B' && unit->team=='P'){
+				x=unit->x;
+				y=unit->y;
+			}
+		}
+		health = getUnitParameterValue(type,1);
+		Unit* newUnit = createUnit('P', type, generateId(), x, y, health);
+					if (newUnit != nullptr) {
+						units.push_back(newUnit);
+					}
+	}
+	
+	int Status::generateId(){
+		int highestId =0;
+		for(const Unit* unit : units){
+			if(unit->id > highestId){
+				highestId=unit->id;
+			}
+		}
+		highestId++;
+		return highestId;
+		
+	}
+	
+	bool Status::isBaseAlive(){
+		for(const Unit* unit : units){
+			if(unit->type == 'B' && unit->team =='E'){
+				if(unit->health<=0){
+					return false;
+				}
+				else{
+					return true;
+				}
+			}
+		}
+	}
+	
+	void Status::collectGold(const Map& map){
+		int goldCount=0;
+		for(const Unit* unit : units){
+			if(unit->type == 'W' && unit->team=='P'){
+				for (int x = 0; x < map.getX(); ++x) {
+       					for (int y = 0; y < map.getY(); ++y) {
+            					if (map.getTile(y, x) == 6) {
+            						if(unit->x==x && unit->y ==y){
+            							goldCount++;
+            						}
+            
+						}
+					}
+				}
+			}
+		}
+		this->gold += goldCount*50;
+	}
+	
 	//function to get amount of gold
 	int Status::getGold() {
+		
 		return gold;
 	}
 	
@@ -240,10 +335,12 @@
 			for (auto& unit : units) {
 				if (unit->type == 'B') {
 					if (Base* baseUnit = dynamic_cast<Base*>(unit)) {
+						//std::cout<<baseUnit->team << " " << baseUnit->type << " " << baseUnit->id << " " << baseUnit->x << " " << baseUnit->y << " " << baseUnit->health << " " << baseUnit->getProductionType() << std::endl;
 						file << baseUnit->team << " " << baseUnit->type << " " << baseUnit->id << " " << baseUnit->x << " " << baseUnit->y << " " << baseUnit->health << " " << baseUnit->getProductionType() << std::endl;
 					}
 				}
 				else {
+					//std::cout<<unit->team << " " << unit->type << " " << unit->id << " " << unit->x << " " << unit->y << " " << unit->health << std::endl;
 					file << unit->team << " " << unit->type << " " << unit->id << " " << unit->x << " " << unit->y << " " << unit->health << std::endl;
 				}
 			}
